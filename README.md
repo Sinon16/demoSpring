@@ -1,4 +1,3 @@
-markdown
 Proyecto demo para usar Spring Boot y poder consumirlo desde React (por ejemplo)
 
 1.- Clonar repositorio
