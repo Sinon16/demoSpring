@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Libros</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; max-width: 600px; }
+        form { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9; }
+        .campo { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 15px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background-color: #218838; }
+        ul { list-style-type: none; padding: 0; }
+        li { background: #fff; border: 1px solid #ddd; margin-bottom: 8px; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <h2>Agregar Nuevo Libro</h2>
+    <form id="form-libro">
+        <div class="campo">
+            <label for="title">Título:</label>
+            <input type="text" id="title" required placeholder="Ej: Cien años de soledad">
+        </div>
+        <div class="campo">
+            <label for="author">Autor:</label>
+            <input type="text" id="author" required placeholder="Ej: Gabriel García Márquez">
+        </div>
+        <div class="campo">
+            <label for="categories">Categorías (separadas por coma):</label>
+            <input type="text" id="categories" placeholder="Ej: Novela, Realismo Mágico">
+        </div>
+        <button type="submit">Guardar Libro</button>
+    </form>
+
+    <h2>Lista de Libros desde Spring Boot</h2>
+    <ul id="lista-libros"></ul>
+
+    <script>
+        const API_URL = 'http://localhost:8080/api/books';
+
+
+        async function cargarLibros() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error('Error al obtener los libros desde el servidor.');
+                }
+                const books = await response.json();
+                
+                const contenedor = document.getElementById('lista-libros');
+                contenedor.innerHTML = ''; 
+
+                books.forEach(book => {
+                    const li = document.createElement('li');
+                    const tituloLibro = book.title || book.titulo || "Sin título";
+                    const autorLibro = book.author || book.autor || "Autor desconocido";
+                    
+                    const categorias = book.categories && book.categories.length > 0 
+                        ? ` | Categorías: ${Array.from(book.categories).join(', ')}` 
+                        : ' | Sin categorías';
+
+                    li.textContent = `Libro: ${tituloLibro} - Autor: ${autorLibro}${categorias}`; 
+                    contenedor.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error al cargar la lista:', error);
+            }
+        }
+
+        document.getElementById('form-libro').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const categoriesText = document.getElementById('categories').value;
+            const categoriesArray = categoriesText
+                .split(',')
+                .map(cat => cat.trim())
+                .filter(cat => cat.length > 0);
+
+            const nuevoLibro = {
+                title: document.getElementById('title').value,
+                author: document.getElementById('author').value,
+                categories: categoriesArray
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(nuevoLibro)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    const mensaje = errorData.message || 'Error al guardar. Asegúrate de que las categorías existan.';
+                    throw new Error(mensaje);
+                }
+
+                const libroCreado = await response.json();
+                alert(`¡Libro "${libroCreado.title}" guardado con éxito!`);
+                
+                document.getElementById('form-libro').reset();
+                cargarLibros(); 
+
+            } catch (error) {
+                alert(`Error del servidor: ${error.message}`);
+                console.error('Detalle del error POST:', error);
+            }
+        });
+
+        cargarLibros();
+    </script>
+</body>
+</html>
