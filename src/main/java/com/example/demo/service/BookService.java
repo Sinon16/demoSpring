@@ -5,12 +5,14 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.model.Book;
 import com.example.demo.repository.BookRepository;
 
 @Service
+@Transactional
 public class BookService {
 
     private final BookRepository bookRepository;
@@ -62,6 +64,16 @@ public class BookService {
 
     public List<Book> findByAuthor(String author) {
         return bookRepository.findByAuthor(author);
+    }
+
+    public boolean updateAuthorName(String oldAuthor, String newAuthor) {
+        int updatedCount = bookRepository.updateAuthorName(oldAuthor, newAuthor);
+        return updatedCount > 0;
+    }
+
+    public boolean deleteAuthorBook(String author){
+        long deletecount = bookRepository.deleteByAuthor(author);
+        return deletecount > 0;
     }
 
    
